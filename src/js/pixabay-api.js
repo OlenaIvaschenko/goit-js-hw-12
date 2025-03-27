@@ -7,7 +7,7 @@ const BASE_URL = 'https://pixabay.com/api/';
 
 // const loader = document.querySelector('.loader'); // Додаємо селектор для індикатора завантаження
 
-export async function fetchImages(query) {
+export async function fetchImages(query, page=1) {
   try {
     const response = await axios.get(BASE_URL, {
       params: {
@@ -16,6 +16,8 @@ export async function fetchImages(query) {
         image_type: 'photo',
         orientation: 'horizontal',
         safesearch: true,
+        per_page: 15,  // отримуємо по 15 зображень
+        page: page,
       },
     });
 
