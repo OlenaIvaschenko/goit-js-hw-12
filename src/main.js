@@ -53,8 +53,8 @@ async function onSearchSubmit (event){
     });
     return;
   }
- // Показуємо лоадер
- loader.classList.remove('visually-hidden');
+ // Приховуємо лоадер
+ loader.classList.add('visually-hidden');
 
 try {
       const { images, totalHits } = await fetchImages(userRequest, currentPage);
