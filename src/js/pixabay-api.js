@@ -5,9 +5,11 @@ import iziToast from 'izitoast';
 const API_KEY = '49441888-9a9fca759a65c9c8b8f6579f2';
 const BASE_URL = 'https://pixabay.com/api/';
 
-// const loader = document.querySelector('.loader'); // Додаємо селектор для індикатора завантаження
+export let perPage = 15;
 
-export async function fetchImages(query, page=1) {
+export async function fetchImages(query, currentPage=1) {
+    
+
   try {
     const response = await axios.get(BASE_URL, {
       params: {
@@ -16,18 +18,26 @@ export async function fetchImages(query, page=1) {
         image_type: 'photo',
         orientation: 'horizontal',
         safesearch: true,
-        per_page: 15,  // отримуємо по 15 зображень
-        page: page,
+        page: currentPage,
+        per_page: perPage,
       },
     });
 
-    console.log(response.data);
+    const { hits, totalHits } = response.data;
+    if (hits.length === 0) {
+          iziToast.warning({ 
+            title: 'No results!', 
+            message: 'Sorry, there are no images matching your search query. Please try again!',
+            position: 'topRight', 
+          });
+             return { images: [], totalHits: 0 };
 
-    return response.data.hits;
-
-    // loader.style.display = 'none'; // Сховуємо індикатор завантаження
-  } catch (error) {
-    console.error(`Error fetching images:`, error);
-    throw error;
   }
+  return { images: hits, totalHits: totalHits };
+} catch (error) {
+  console.error('Error:', error);
+  return { images: [], totalHits: 0 };
 }
+}
+
+  

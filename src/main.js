@@ -10,91 +10,114 @@ import 'simplelightbox/dist/simple-lightbox.min.css';
 
 import iconCross from '../src/img/icon/cross-min.png';
 
+const refs = {
+  form: document.querySelector('.form'),
+  input: document.querySelector('[name="search-text"]'),
+  gallery: document.querySelector('.gallery'),
+  loader: document.querySelector('.loader'),
+  loadMoreBtn:document.querySelector('.load-more')
+};
 
-let page = 1;     // Номер поточної сторінки
-let query = '';   // Поточний пошуковий запит
+
+let userRequest = null;
+let currentPage = 1;
+let totalPages = 0;
 const perPage = 15;
 
-const form = document.querySelector('.form');
-const loader = document.querySelector('.loader');
-const gallery = document.querySelector('.gallery');
-const loadMoreBtn = document.querySelector('.load-more');
+const {form, input, gallery,loader, loadMoreBtn} = refs;
+
+form.addEventListener("submit", onSearchSubmit)
+loadMoreBtn.addEventListener('click', onLoadMoreClick);
 
 
-form.addEventListener('submit', async (event) => {
+//**Functions**
+
+async function onSearchSubmit (event){
   
-  event.preventDefault();
-  // Перевірка введеного тексту
- query = event.target.elements['search-text'].value.trim();
+  event.preventDefault()
+ 
+  //  console.log("onSearchSubmit result:", result);
+  currentPage = 1;
+  totalPages = 0;
+  gallery.innerHTML = '';
 
-  if (!query) {
+   // Перевірка введеного тексту
+
+  userRequest = input.value.trim();
+
+  if (userRequest === '') {
     iziToast.error({
-      title: 'Error',
-      message: 'Please enter a search query!',
+      title: 'Error:',
+      message: 'Please fill in the search field before submitting!',
+      position: 'topRight',
     });
     return;
   }
  // Показуємо лоадер
  loader.classList.remove('visually-hidden');
- //Очищаємо галерею
- gallery.innerHTML = '';
-  // Очищаємо поле вводу
-  form.reset();
+
+try {
+      const { images, totalHits } = await fetchImages(userRequest, currentPage);
+
+
+      renderImages(gallery, images);
+      
+
+      totalPages = Math.ceil(totalHits / perPage);
+
   
-  page=1;
+      if (totalPages > currentPage) {
+        loadMoreBtn.classList.remove('visually-hidden');
+      }
+    }  catch (error) {
 
-  try {
-    const { hits, totalHits } = await fetchImages(query, page, perPage);
-    if (hits.length === 0) {
-      iziToast.warning({ title: 'Oops!', message: 'No images found. Try again!' });
-      return;
-    }
+      console.error('Error:', error);
+      }
+  
+      finally {
+        loader.classList.add('visually-hidden');
+        form.reset();
+      }   
+      
+}
 
-    renderImages(hits);
-    loadMoreBtn.classList.add('visually-hidden');
+async function onLoadMoreClick() {
+  currentPage += 1;
+try{
 
-    if (page * perPage >= totalHits) {
-      loadMoreBtn.classlist.remove('visually-hidden');
-      iziToast.info({ title: 'End', message: "We're sorry, but you've reached the end of search results." });
+  loadMoreBtn.classList.add('visually-hidden');
+  loader.classList.remove('visually-hidden');
+
+  const { images} = await fetchImages(userRequest, currentPage);
+
+  renderImages(gallery, images);
+  new SimpleLightbox('.gallery a').refresh();
+
+const card = document.querySelector('.gallery-item');
+    const cardHeight = card.getBoundingClientRect().height;
+
+    window.scrollBy({
+      top: cardHeight * 2,
+      behavior: 'smooth',
+    });
+
+
+    if (currentPage >= totalPages) {
+      loadMoreBtn.classList.add('visually-hidden');
+      iziToast.info({
+        title: '',
+        message: "We're sorry, but you've reached the end of search results.",
+        position: 'topRight',
+      });
+    } else {
+      loadMoreBtn.classList.remove('visually-hidden'); 
     }
   } catch (error) {
-    iziToast.error({ title: 'Error', message: 'Failed to fetch images. Try again later!' });
+    console.error('Error:', error);
   } finally {
     loader.classList.add('visually-hidden');
   }
-});
 
-
-loadMoreBtn.addEventListener('click', async () => {
-page += 1;
-loader.classList.remove('visually-hidden');
-loadMoreBtn.classList.add('visually-hidden');
-
-try {
-  const { hits, totalHits } = await fetchImages(query, page, perPage);
-  renderImages(hits);
-
-  scrollPage();
-
-  if (page * perPage >= totalHits) {
-    loadMoreBtn.classlist.add('visually-hidden');
-    iziToast.info({ title: 'End', message: "We're sorry, but you've reached the end of search results." });
-  } else {
-    loadMoreBtn.classList.remove('visually-hidden');
-  }
-} catch (error) {
-  iziToast.error({ title: 'Error', message: 'Failed to fetch images. Try again later!' });
-} finally {
-  loader.classList.add('visually-hidden');
-}
-});
-
-function scrollPage() {
-const cardHeight = document.querySelector('.gallery-item').getBoundingClientRect().height;
-window.scrollBy({
-  top: cardHeight * 2,
-  behavior: 'smooth',
-});
 }
 
 
