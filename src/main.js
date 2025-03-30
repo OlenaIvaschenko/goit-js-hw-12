@@ -18,21 +18,27 @@ const refs = {
   loadMoreBtn:document.querySelector('.load-more')
 };
 
+refs.loadMoreBtn.classList.add('visually-hidden');
+
 
 let userRequest = null;
 let currentPage = 1;
 let totalPages = 0;
 const perPage = 15;
 
-const {form, input, gallery,loader, loadMoreBtn} = refs;
+
+const {form, input, gallery, loader, loadMoreBtn} = refs;
+
 
 form.addEventListener("submit", onSearchSubmit)
 loadMoreBtn.addEventListener('click', onLoadMoreClick);
 
 
+
 //**Functions**
 
 async function onSearchSubmit (event){
+
   
   event.preventDefault()
  
@@ -53,11 +59,19 @@ async function onSearchSubmit (event){
     });
     return;
   }
- // Приховуємо лоадер
- loader.classList.add('visually-hidden');
+
+ //Додаємо лоадер 
+ loader.classList.add('visible');
+//Ховаємо кнопку Load more
+loadMoreBtn.classList.add('visually-hidden');
 
 try {
+
+  // loader.classList.add('visible');
+
       const { images, totalHits } = await fetchImages(userRequest, currentPage);
+
+      
 
 
       renderImages(gallery, images);
@@ -68,6 +82,7 @@ try {
   
       if (totalPages > currentPage) {
         loadMoreBtn.classList.remove('visually-hidden');
+
       }
     }  catch (error) {
 
@@ -75,7 +90,7 @@ try {
       }
   
       finally {
-        loader.classList.add('visually-hidden');
+        loader.classList.remove('visible');
         form.reset();
       }   
       
@@ -86,12 +101,13 @@ async function onLoadMoreClick() {
 try{
 
   loadMoreBtn.classList.add('visually-hidden');
-  loader.classList.remove('visually-hidden');
+  loader.classList.add('visible');
 
   const { images} = await fetchImages(userRequest, currentPage);
 
   renderImages(gallery, images);
-  new SimpleLightbox('.gallery a').refresh();
+
+  // new SimpleLightbox('.gallery a').refresh();
 
 const card = document.querySelector('.gallery-item');
     const cardHeight = card.getBoundingClientRect().height;
@@ -115,7 +131,7 @@ const card = document.querySelector('.gallery-item');
   } catch (error) {
     console.error('Error:', error);
   } finally {
-    loader.classList.add('visually-hidden');
+    loader.classList.remove('visible');
   }
 
 }
